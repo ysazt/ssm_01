@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+
+">
+    <!--加载db.properties -->
+    <context:property-placeholder location="classpath:db.properties"></context:property-placeholder>
+
+    <!--配置数据源-->
+    <bean id="dataSource1" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="jdbcUrl" value="${jdbc.url}"></property>
+        <property name="driverClass" value="${jdbc.driver}"></property>
+        <property name="user" value="${jdbc.uname}"></property>
+        <property name="password" value="${jdbc.upwd}"></property>
+    </bean>
+
+    <!--sqlSessionFactory -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource"  ref="dataSource1" ></property>
+        <property name="configLocation" value="classpath:mybatis.xml"></property>
+    </bean>
+
+    <!--扫描所有接口类   所有dao层下的类spring 都帮你创建好了-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer" >
+        <property name="basePackage" value="com.ambow.dao"></property>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource1"></property>
+    </bean>
+
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="find*" read-only="true"/>
+            <tx:method name="*"></tx:method>
+        </tx:attributes>
+    </tx:advice>
+
+    <aop:config >
+        <aop:pointcut id="aopPointcut" expression="execution(* com.ambow.service.*.*(..))"></aop:pointcut>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="aopPointcut" ></aop:advisor>
+    </aop:config>
+
+  <!--  <bean id="provinceService" class="com.ambow.service.ProvinceService">
+        <property name="provinceDao" ref="provinceDao"></property>
+    </bean>-->
+
+    <!--com.ambow.service.  面向切面管理 ， 通知， 要看这层的方法是否需要事务处理  ，
+        只要你调用这层下的方法， 就会发生通知， 若方法的名字是find 开头，就只读， 剩余要做事务处理
+        service 就负责调用dao 层，至于是否提交事务移交给aop 处理
+        property name="cityDao" ref="cityDao"    ref 中的值赋值给 name
+        ref 中的值， 上面写了扫描了所有dao 层下的所有类
+        dao 层 数据库操作，基本操作dataSource1    sqlSessionFactory
+
+        spring.xml
+           有了连接数据库的基本属性   加载了db.properties
+           有了连接数据库的创建连接   C3P0　　　　　　将ｍｙｂａｔｉｓ下连接数据库的基本属性注释掉
+           有了SqlSessionFactory   必须有连接数据库的基本+ c3p0
+           有了所有dao 层类         spring创建了ｄａｏ　层下的所有类　
+           做了面向切面通知　　　　　　１.　通知ｓｅｒｉｖｃｅ　这层
+           　　　　　　　　　　　　　　２.　这层下的ｆｉｎｄ开头的方法　只读，　其余方法　事务处理
+           有了service　层类　　　　　自己配置的　　
+
+           　　　　　　　　　　　
+     -->
+ <!--   <bean id="cityServcie" class="com.ambow.service.CityServcie">
+        <property name="cityDao" ref="cityDao"></property>
+    </bean>-->
+
+    <!--spring 扫描所有service  包下的注解-->
+    <context:component-scan base-package="com.ambow.service"></context:component-scan>
+
+</beans>

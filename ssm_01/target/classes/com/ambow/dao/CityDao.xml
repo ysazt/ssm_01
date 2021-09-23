@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ambow.dao.CityDao">
+    <resultMap id="citymap" type="com.ambow.entity.CityEntity">
+        <id column="cid" property="cid" ></id>
+        <result column="cname" property="cname"></result>
+        <association property="cproid" javaType="com.ambow.entity.ProvinceEntity">
+             <id column="pid" property="pid"></id>
+            <result column="pname" property="pname"></result>
+        </association>
+
+    </resultMap>
+
+    <insert id="addCity" parameterType="com.ambow.entity.CityEntity">
+        insert into db_city values (null,#{cname},#{cproid.pid})
+    </insert>
+
+    <update id="updateCity" parameterType="com.ambow.entity.CityEntity">
+        update db_city set  cname=#{cname}, cproid=#{cproid.pid}  where cid=#{cid}
+    </update>
+
+    <delete id="delCity">
+        delete from db_city where cid=#{cid}
+    </delete>
+
+    <select id="byidCity" resultMap="citymap">
+        select * from db_city c,db_province p where  c.cproid = p.pid and  cid=#{cid}
+    </select>
+
+    <select id="bynameAndPidCityDao" resultType="int">
+        select cid from db_city where cname=#{name} and cproid=#{pid}
+    </select>
+
+
+
+
+</mapper>
